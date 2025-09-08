@@ -1,0 +1,17 @@
+[Unit]
+Description=Telegram News Summary
+After=network.target
+
+[Service]
+Type=oneshot
+User={{USER}}
+WorkingDirectory={{DEPLOY_DIR}}
+ExecStart={{DEPLOY_DIR}}/.venv/bin/tgester \
+    --config {{DEPLOY_DIR}}/config.yaml \
+    --env {{DEPLOY_DIR}}/.env \
+    --mark-read
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+telethon:
+  device_model: '...'
+  system_version: '...'
+  app_version: '...'
+  session: 'telegram.session'
+
+telegram:
+  channels:
+    - '@<channel1>'
+    - '@<channel2>'
+  timezone: 'Europe/Prussia'
+
+agent:
+  model: '<model_name>'  # e.g. claude-sonnet-4-20250514
+
+publishing:
+  author_name: '<agents_name>'
+  summary_channel: '@<announcement_channel>'

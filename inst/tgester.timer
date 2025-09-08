@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily News Summary
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 Europe/Moscow
+Persistent=true
+
+[Install]
+WantedBy=timers.target
