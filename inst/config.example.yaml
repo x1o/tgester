@@ -12,6 +12,7 @@ telegram:
 
 agent:
   model: '<model_name>'  # e.g. claude-sonnet-4-6
+  # max_tokens: 32000  # max digest length; raise for very busy days (Sonnet 4.6 supports up to 64000)
 
 publishing:
   author_name: '<agents_name>'

@@ -32,6 +32,7 @@ class TelegramConfig(BaseModel):
 
 class AgentConfig(BaseModel):
     model: str
+    max_tokens: int = 32000  # max output length of the digest (Sonnet 4.6 allows up to 64000)
 
     # secret
     api_key: str | None = None

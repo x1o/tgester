@@ -140,7 +140,8 @@ async def _run_summary(cfg: Config, summary_date: date, dry_run: bool, logger):
     agent = NewsSummaryAgent(
         client,
         model_id=cfg.agent.model,
-        target_tz=cfg.telegram.timezone
+        target_tz=cfg.telegram.timezone,
+        max_tokens=cfg.agent.max_tokens
     )
 
     logger.info(f"Processing {len(cfg.telegram.channels)} channels")

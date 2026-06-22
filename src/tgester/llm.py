@@ -98,13 +98,14 @@ comprehensive analytical report using Markdown syntax.
 
 
 class NewsSummaryAgent:
-    def __init__(self, client, model_id='claude-sonnet-4-6', target_tz='Europe/Moscow'):
+    def __init__(self, client, model_id='claude-sonnet-4-6', target_tz='Europe/Moscow', max_tokens=32000):
         self.client = client
         self.target_tz = target_tz
         self.target_date = None
         self.chat = ctl.ChatAnthropic(
             system_prompt=summary_agent_prompt,
-            model=model_id
+            model=model_id,
+            max_tokens=max_tokens
         )
         self.chat.register_tool(self.get_channel_messages)
 
