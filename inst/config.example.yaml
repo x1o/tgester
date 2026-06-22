@@ -8,11 +8,15 @@ telegram:
   channels:
     - '@<channel1>'
     - '@<channel2>'
+  # Optional: tell the model what each channel covers, to improve grouping/attribution
+  descriptions:
+    '@<channel1>': 'what this channel covers'
   timezone: 'Europe/Prussia'
 
 agent:
   model: '<model_name>'  # e.g. claude-sonnet-4-6
   # max_tokens: 32000  # max digest length; raise for very busy days (Sonnet 4.6 supports up to 64000)
+  # thinking: false    # set true for adaptive thinking (more analytical, more tokens; needs a model/SDK that supports it)
 
 publishing:
   author_name: '<agents_name>'

@@ -141,14 +141,16 @@ async def _run_summary(cfg: Config, summary_date: date, dry_run: bool, logger):
         client,
         model_id=cfg.agent.model,
         target_tz=cfg.telegram.timezone,
-        max_tokens=cfg.agent.max_tokens
+        max_tokens=cfg.agent.max_tokens,
+        thinking=cfg.agent.thinking
     )
 
     logger.info(f"Processing {len(cfg.telegram.channels)} channels")
 
     summary = await agent.create_daily_summary(
         cfg.telegram.channels,
-        summary_date
+        summary_date,
+        cfg.telegram.descriptions
     )
 
     logger.info("Summary generated successfully")
@@ -190,9 +192,9 @@ async def _run_fetch(cfg: Config, channels: list[str], summary_date: date):
 
     for channel, msgs in messages.items():
         print(f"\n=== {channel} ({len(msgs)} messages) ===")
-        for ts, body in msgs.items():
-            oneline = ' '.join(body.split())
-            print(f"[{ts}] {oneline[:200]}")
+        for m in msgs:
+            oneline = ' '.join(m['text'].split())
+            print(f"[{m['time']}] {oneline[:200]}")
 
 
 if __name__ == "__main__":

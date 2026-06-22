@@ -44,7 +44,7 @@ async def get_messages_for_date(
 async def get_channel_messages_for_date(client, channel_name, day_start, day_end, target_tz):
     channel = await client.get_entity(channel_name)
 
-    day_messages = {}
+    day_messages = []
     # iter_messages walks newest-to-oldest; offset_date excludes anything at or
     # after day_end, and we stop as soon as we cross below day_start.
     async for message in client.iter_messages(channel, offset_date=day_end):
@@ -52,9 +52,11 @@ async def get_channel_messages_for_date(client, channel_name, day_start, day_end
             break
         msg_dt_str = message.date.astimezone(target_tz).strftime(r'%Y-%m-%d %H:%M:%S')
         msg_body = message.message or '[Media]'
-        day_messages[msg_dt_str] = msg_body
+        # A list (not a dict keyed by timestamp) so messages posted in the same
+        # second are not silently overwritten.
+        day_messages.append({'time': msg_dt_str, 'text': msg_body})
 
-    day_messages = dict(reversed(day_messages.items()))
+    day_messages.reverse()  # chronological order
 
     return day_messages
 

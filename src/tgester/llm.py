@@ -73,23 +73,38 @@ You are a professional news analyst specialising in summarising news from variou
 
 ## Task
 Analyze and summarize news from multiple Telegram channels, creating a
-comprehensive analytical report using Markdown syntax.
+comprehensive analytical report using Markdown syntax. The request lists the
+source channels, each with a short description of what it covers — use these
+descriptions to group and attribute stories correctly.
 
 ## Output Requirements
-1. Group news by major topics (across all sources)
-2. Provide accurate summaries for each topic
-3. Include lighter/entertainment news as well
-4. For Munich news: skip weather and traffic
-5. Aim for 15+ minute reading time
-6. Include 10+ stories per section when appropriate - omit as few stories as possible
-7. Unrelated stories should go on their own lines, perhaps using markdown bullets.
-   Do not mix them in the same paragraph.
-8. Provide the Statistics section at the end, which includes the story count per
-   channel and in total, date range, etc).
-9. Do not echo your intentions, start with the analysis right away, i.e. do not
-   add "I'll retrieve and analyze the news..." at the very beginning.
-10. Use emojis if appropriate
-11. Consider all topics equally (local news are as important as global)
+1. Open with a short "Главное за день" lead (2-4 sentences) naming the day's
+   principal threads, before the detailed sections.
+2. Group news by major topics across all sources — organise by topic, not by channel.
+3. When several channels report the same event, MERGE it into a single item and
+   cite the sources in parentheses, e.g. "(@bbbreaking, @banksta)". Never repeat
+   the same story under multiple bullets.
+4. Be analytical, not a bare list of headlines: connect related stories and add
+   context or implications where it is warranted.
+5. Provide accurate summaries for each topic.
+6. Include lighter/entertainment news as well.
+7. For Munich news: skip weather and traffic.
+8. Aim for 15+ minute reading time.
+9. Include 10+ stories per section when appropriate - omit as few stories as possible.
+10. Unrelated stories should go on their own lines, perhaps using markdown bullets.
+    Do not mix them in the same paragraph.
+11. Provide the Statistics section at the end, which includes the story count per
+    channel and in total, date range, etc).
+12. Do not echo your intentions, start with the analysis right away, i.e. do not
+    add "I'll retrieve and analyze the news..." at the very beginning.
+13. Use emojis if appropriate.
+14. Consider all topics equally (local news are as important as global).
+
+## Example (style of a merged, attributed item)
+## 💸 Финансы
+- **ЦБ снизил ключевую ставку до 16%** (@banksta, @russianmacro). Регулятор
+  объяснил решение замедлением инфляции; @russianmacro добавляет, что рынок
+  ожидал более осторожного шага, и связывает это с динамикой рубля.
 
 ## Language
 - Input: Russian
@@ -98,21 +113,28 @@ comprehensive analytical report using Markdown syntax.
 
 
 class NewsSummaryAgent:
-    def __init__(self, client, model_id='claude-sonnet-4-6', target_tz='Europe/Moscow', max_tokens=32000):
+    def __init__(self, client, model_id='claude-sonnet-4-6', target_tz='Europe/Moscow',
+                 max_tokens=32000, thinking=False):
         self.client = client
         self.target_tz = target_tz
         self.target_date = None
+        self.thinking = thinking
         self.chat = ctl.ChatAnthropic(
             system_prompt=summary_agent_prompt,
             model=model_id,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            # A large max_tokens trips the SDK's non-streaming guard (it refuses
+            # non-streaming requests estimated to exceed 10 min, i.e. above
+            # ~21k tokens). An explicit client timeout suppresses that guard; the
+            # digest itself finishes in a few minutes, well within this ceiling.
+            kwargs={'timeout': 900}
         )
         self.chat.register_tool(self.get_channel_messages)
 
     async def get_channel_messages(
             self,
             channels: list[str]
-        ) -> dict[str, dict[str, str]]:
+        ) -> dict[str, list[dict[str, str]]]:
         '''
         Get all messages posted on the target date from the specified Telegram channels.
 
@@ -123,15 +145,14 @@ class NewsSummaryAgent:
 
         Returns
         -------
-            Mapping of channel names to dicts of messages,
-            {timestamp: message content}
+            Mapping of channel names to a chronological list of messages,
+            each {'time': timestamp, 'text': message content}
 
         Examples
         --------
         >>> news = await self.get_channel_messages(['@channel1', '@channel2'])
-        >>> next(iter(news['@channel1'].items()))
-        ('2025-04-14 16:37:18',
-        'Lorem ipsum <...>')
+        >>> news['@channel1'][0]
+        {'time': '2025-04-14 16:37:18', 'text': 'Lorem ipsum <...>'}
         '''
         return await get_messages_for_date(
             self.client,
@@ -140,16 +161,24 @@ class NewsSummaryAgent:
             self.target_tz
         )
 
-    async def create_daily_summary(self, channels, target_date, echo='none'):
+    async def create_daily_summary(self, channels, target_date, descriptions=None, echo='none'):
         self.target_date = target_date
+        descriptions = descriptions or {}
+        source_lines = [
+            f'- {ch} — {descriptions[ch]}' if descriptions.get(ch) else f'- {ch}'
+            for ch in channels
+        ]
         query = (
-            f'Please summarise the news for {target_date:%Y-%m-%d} '
-            f'from the following channels: {", ".join(channels)}'
+            f'Please summarise the news for {target_date:%Y-%m-%d} from the following '
+            f'channels (the description after each handle indicates what the channel '
+            f'covers):\n' + '\n'.join(source_lines)
         )
+        extra = {'thinking': {'type': 'adaptive'}} if self.thinking else None
         response = self.chat.chat_async(
             query,
             stream=False,
-            echo=echo
+            echo=echo,
+            kwargs=extra
         )
         response = await response
         return response

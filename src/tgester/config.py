@@ -20,6 +20,9 @@ class TelethonConfig(BaseModel):
 class TelegramConfig(BaseModel):
     channels: list[str] = Field(..., min_length=1)
     timezone: str
+    # Optional per-channel descriptions ({'@handle': 'what it covers'}); given to
+    # the model so it can group and attribute stories by source.
+    descriptions: dict[str, str] = {}
 
     @field_validator('channels')
     @classmethod
@@ -33,6 +36,7 @@ class TelegramConfig(BaseModel):
 class AgentConfig(BaseModel):
     model: str
     max_tokens: int = 32000  # max output length of the digest (Sonnet 4.6 allows up to 64000)
+    thinking: bool = False    # enable adaptive thinking (needs a model/SDK that supports it)
 
     # secret
     api_key: str | None = None
