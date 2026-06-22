@@ -2,7 +2,7 @@
 
 import chatlas as ctl
 
-from .tg import get_unread_messages
+from .tg import get_messages_for_date
 
 
 def compile_prompt(
@@ -87,7 +87,7 @@ comprehensive analytical report using Markdown syntax.
 8. Provide the Statistics section at the end, which includes the story count per
    channel and in total, date range, etc).
 9. Do not echo your intentions, start with the analysis right away, i.e. do not
-   add "I'll retrieve and analyze the unread news..." at the very beginning.
+   add "I'll retrieve and analyze the news..." at the very beginning.
 10. Use emojis if appropriate
 11. Consider all topics equally (local news are as important as global)
 
@@ -98,31 +98,27 @@ comprehensive analytical report using Markdown syntax.
 
 
 class NewsSummaryAgent:
-    def __init__(self, client, model_id='claude-sonnet-4-20250514'):
+    def __init__(self, client, model_id='claude-sonnet-4-20250514', target_tz='Europe/Moscow'):
         self.client = client
+        self.target_tz = target_tz
+        self.target_date = None
         self.chat = ctl.ChatAnthropic(
             system_prompt=summary_agent_prompt,
             model=model_id
         )
-        self.chat.register_tool(self.get_unread_messages)
+        self.chat.register_tool(self.get_channel_messages)
 
-    async def get_unread_messages(
+    async def get_channel_messages(
             self,
-            channels: list[str],
-            target_tz: str ='Europe/Moscow',
-            mark_read: bool = False
+            channels: list[str]
         ) -> dict[str, dict[str, str]]:
         '''
-        Get unread messages from specified Telegram channels for 1 day period.
+        Get all messages posted on the target date from the specified Telegram channels.
 
         Parameters
         ----------
-        channel_names
+        channels
             List of channel names to retrieve messages from
-        target_tz
-            The timezone for determining date boundaries
-        mark_read
-            Whether to mark retrieved messages as read
 
         Returns
         -------
@@ -131,20 +127,24 @@ class NewsSummaryAgent:
 
         Examples
         --------
-        >>> unread_news = await self.get_unread_messages(['channel1', 'channel2'])
-        >>> next(iter(unread_news['channel1'].items()))
+        >>> news = await self.get_channel_messages(['@channel1', '@channel2'])
+        >>> next(iter(news['@channel1'].items()))
         ('2025-04-14 16:37:18',
         'Lorem ipsum <...>')
         '''
-        unread_messages = await get_unread_messages(self.client, channels, target_tz, mark_read)
-        return unread_messages
+        return await get_messages_for_date(
+            self.client,
+            channels,
+            self.target_date,
+            self.target_tz
+        )
 
-    async def create_daily_summary(self, channels, mark_read=False, echo='none'):
-        query = f'Please summarise unread news for 1 day from the following channels: {", ".join(channels)}'
-        if mark_read:
-            query += '. Mark messages as read: `mark_read` must be set to `True`'
-        else:
-            query += '. Do not mark messages as read: `mark_read` must be set to `False`.'
+    async def create_daily_summary(self, channels, target_date, echo='none'):
+        self.target_date = target_date
+        query = (
+            f'Please summarise the news for {target_date:%Y-%m-%d} '
+            f'from the following channels: {", ".join(channels)}'
+        )
         response = self.chat.chat_async(
             query,
             stream=False,

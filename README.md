@@ -7,7 +7,8 @@
 
 ## Features
 
--   Fetches unread messages from the specified Telegram channels (1 day window)
+-   Fetches all messages posted on a given date (defaults to *yesterday*) from the specified Telegram channels
+-   Works even when the account is not a member of the channels (public channels are scraped by `@username`)
 -   Creates analytical summaries grouping news by topics across all sources
 -   Publishes to Telegra.ph and posts the link to a designated channel
 

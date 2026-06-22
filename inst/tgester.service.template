@@ -8,8 +8,7 @@ User={{USER}}
 WorkingDirectory={{DEPLOY_DIR}}
 ExecStart={{DEPLOY_DIR}}/.venv/bin/tgester \
     --config {{DEPLOY_DIR}}/config.yaml \
-    --env {{DEPLOY_DIR}}/.env \
-    --mark-read
+    --env {{DEPLOY_DIR}}/.env
 StandardOutput=journal
 StandardError=journal
 
