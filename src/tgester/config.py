@@ -35,8 +35,8 @@ class TelegramConfig(BaseModel):
 
 class AgentConfig(BaseModel):
     model: str
-    max_tokens: int = 32000  # max output length of the digest (Sonnet 4.6 allows up to 64000)
-    thinking: bool = False    # enable adaptive thinking (needs a model/SDK that supports it)
+    max_tokens: int = 32000  # max output length of the digest (Opus 4.8 allows up to 128000)
+    thinking: bool = True     # adaptive thinking (needs a model/SDK that supports it; default model does)
 
     # secret
     api_key: str | None = None

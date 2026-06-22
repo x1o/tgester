@@ -127,8 +127,8 @@ descriptions to group and attribute stories correctly.
 
 
 class NewsSummaryAgent:
-    def __init__(self, client, model_id='claude-sonnet-4-6', target_tz='Europe/Moscow',
-                 max_tokens=32000, thinking=False):
+    def __init__(self, client, model_id='claude-opus-4-8', target_tz='Europe/Moscow',
+                 max_tokens=32000, thinking=True):
         self.client = client
         self.target_tz = target_tz
         self.target_date = None
