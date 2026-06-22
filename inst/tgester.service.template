@@ -6,7 +6,7 @@ After=network.target
 Type=oneshot
 User={{USER}}
 WorkingDirectory={{DEPLOY_DIR}}
-ExecStart={{DEPLOY_DIR}}/.venv/bin/tgester \
+ExecStart={{DEPLOY_DIR}}/.venv/bin/tgester summarise \
     --config {{DEPLOY_DIR}}/config.yaml \
     --env {{DEPLOY_DIR}}/.env
 StandardOutput=journal
