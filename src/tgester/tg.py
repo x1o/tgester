@@ -73,8 +73,15 @@ def _demote_headings(md):
 
 def publish_summary(news_summary_content, access_token, author_name='News Summary Agent', domain='telegra.ph'):
     telegraph = Telegraph(access_token=access_token, domain=domain)
+    text = news_summary_content.lstrip('\n')
+    # Some models (e.g. Opus with thinking off) emit tool-call narration before
+    # the report ("I'll retrieve the messages..."). Drop anything before the
+    # report's '# ' title heading so it doesn't become the page title.
+    heading = re.search(r'(?m)^# ', text)
+    if heading:
+        text = text[heading.start():]
     # First line is the page title; everything else is the body.
-    title, _, content = news_summary_content.lstrip('\n').partition('\n')
+    title, _, content = text.partition('\n')
     title = title.strip('# ')
     content = _demote_headings(content.lstrip('\n'))
     nodes = html_to_nodes(markdown(content))

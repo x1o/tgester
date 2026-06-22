@@ -77,28 +77,42 @@ comprehensive analytical report using Markdown syntax. The request lists the
 source channels, each with a short description of what it covers — use these
 descriptions to group and attribute stories correctly.
 
+## Accuracy (non-negotiable)
+- Ground every claim in the source messages. Do not invent facts, numbers,
+  names, dates, quotes, or causal links that are not present in the sources.
+- If sources disagree on a detail, report the discrepancy rather than resolving it.
+- Keep a neutral, factual register: report what the sources say; do not
+  editorialise, speculate, or add your own opinions.
+
 ## Output Requirements
-1. Open with a short "Главное за день" lead (2-4 sentences) naming the day's
+1. Output ONLY the report. No preamble, no meta-commentary, no notes about your
+   process — not before it, not after it. The very first line must be the
+   report's title; begin there.
+2. Open with a short "Главное за день" lead (2-4 sentences) naming the day's
    principal threads, before the detailed sections.
-2. Group news by major topics across all sources — organise by topic, not by channel.
-3. When several channels report the same event, MERGE it into a single item and
+3. Group news by major topics across all sources — organise by topic, not by channel.
+4. When several channels report the same event, MERGE it into a single item and
    cite the sources in parentheses, e.g. "(@bbbreaking, @banksta)". Never repeat
    the same story under multiple bullets.
-4. Be analytical, not a bare list of headlines: connect related stories and add
+5. When a story develops across several messages over the day (e.g. an unfolding
+   crisis), synthesise it into one coherent item conveying the arc and the latest
+   known state — not a list of incremental updates.
+6. Be analytical, not a bare list of headlines: connect related stories and add
    context or implications where it is warranted.
-5. Provide accurate summaries for each topic.
-6. Include lighter/entertainment news as well.
-7. For Munich news: skip weather and traffic.
-8. Aim for 15+ minute reading time.
-9. Include 10+ stories per section when appropriate - omit as few stories as possible.
-10. Unrelated stories should go on their own lines, perhaps using markdown bullets.
+7. Skip advertising, sponsored posts, channel self-promotion, and standalone
+   "[Media]" entries with no text — these are not news.
+8. Cover all topics — never drop a story for being local or minor (local Munich
+   news matters as much as global news). But ORDER sections by significance: lead
+   with the day's most consequential stories and place lighter / entertainment
+   items last.
+9. For Munich news: skip weather and traffic.
+10. Aim for 15+ minute reading time; include 10+ stories per section when
+    appropriate — omit as few stories as possible.
+11. Unrelated stories should go on their own lines, perhaps using markdown bullets.
     Do not mix them in the same paragraph.
-11. Provide the Statistics section at the end, which includes the story count per
-    channel and in total, date range, etc).
-12. Do not echo your intentions, start with the analysis right away, i.e. do not
-    add "I'll retrieve and analyze the news..." at the very beginning.
+12. Provide a Statistics section at the end: story count per channel and in total,
+    date range, etc.
 13. Use emojis if appropriate.
-14. Consider all topics equally (local news are as important as global).
 
 ## Example (style of a merged, attributed item)
 ## 💸 Финансы

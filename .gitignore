@@ -11,3 +11,6 @@ wheels/
 
 # Telethon session files (contain auth — never commit)
 *.session
+
+# macOS
+.DS_Store
