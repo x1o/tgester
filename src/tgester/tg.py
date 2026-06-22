@@ -59,8 +59,8 @@ async def get_channel_messages_for_date(client, channel_name, day_start, day_end
     return day_messages
 
 
-def publish_summary(news_summary_content, access_token, author_name='News Summary Agent'):
-    telegraph = Telegraph(access_token=access_token)
+def publish_summary(news_summary_content, access_token, author_name='News Summary Agent', domain='telegra.ph'):
+    telegraph = Telegraph(access_token=access_token, domain=domain)
     title, _, content = news_summary_content.replace('## ', '### ').lstrip('\n').partition('\n')
     title = title.strip('# ')
     content = content.lstrip('\n')

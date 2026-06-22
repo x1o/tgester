@@ -98,7 +98,7 @@ comprehensive analytical report using Markdown syntax.
 
 
 class NewsSummaryAgent:
-    def __init__(self, client, model_id='claude-sonnet-4-20250514', target_tz='Europe/Moscow'):
+    def __init__(self, client, model_id='claude-sonnet-4-6', target_tz='Europe/Moscow'):
         self.client = client
         self.target_tz = target_tz
         self.target_date = None

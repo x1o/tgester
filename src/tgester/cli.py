@@ -101,7 +101,8 @@ async def _run_summary(cfg: Config, summary_date: date, logger):
     telegraph_response = publish_summary(
         summary.content,
         cfg.publishing.access_token,
-        cfg.publishing.author_name
+        cfg.publishing.author_name,
+        cfg.publishing.domain
     )
 
     logger.info(f"Published: {telegraph_response['url']}")

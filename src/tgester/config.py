@@ -40,6 +40,7 @@ class AgentConfig(BaseModel):
 class PublishingConfig(BaseModel):
     author_name: str
     summary_channel: str
+    domain: str = 'telegra.ph'  # Telegraph API domain; use 'graph.org' if telegra.ph is blocked
 
     # secret
     access_token: str | None = None
