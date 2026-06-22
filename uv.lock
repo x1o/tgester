@@ -1060,6 +1060,7 @@ name = "tgester"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "anthropic" },
     { name = "chatlas", extra = ["anthropic"] },
     { name = "isodate" },
     { name = "markdown" },
@@ -1078,6 +1079,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anthropic", specifier = ">=0.111" },
     { name = "chatlas", extras = ["anthropic"], specifier = ">=0.11" },
     { name = "isodate", specifier = ">=0.7.2" },
     { name = "markdown", specifier = ">=3.9" },

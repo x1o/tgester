@@ -5,6 +5,7 @@ description = "Telegram news digester"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "anthropic>=0.111",  # adaptive thinking + higher non-streaming ceiling
     "chatlas[anthropic]>=0.11",
     "isodate>=0.7.2",
     "markdown>=3.9",
