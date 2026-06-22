@@ -66,6 +66,13 @@ class Config(BaseModel):
         config_data['telethon']['api_id'] = int(os.getenv('TELEGRAM_API_ID', '0'))
         config_data['telethon']['api_hash'] = os.getenv('TELEGRAM_API_HASH')
 
+        # Resolve a relative session path against the config file's directory, so
+        # the CLI works from any working directory. In deployment the config and
+        # session live in the same dir, so this is a no-op there.
+        session = config_data['telethon'].get('session')
+        if session and not Path(session).is_absolute():
+            config_data['telethon']['session'] = str((Path(config_path).parent / session).resolve())
+
         if 'agent' not in config_data:
             config_data['agent'] = {}
         config_data['agent']['api_key'] = os.getenv('ANTHROPIC_API_KEY')

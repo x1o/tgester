@@ -39,6 +39,27 @@ cp inst/example.env .env
 
 Sign in once and save the session file.
 
+## Usage
+
+``` bash
+# Generate the digest for yesterday and post it to the summary channel
+tgester summarise -c config.yaml -e .env
+
+# Pick a date and/or override the channels; --dry-run publishes to Telegra.ph
+# but skips the channel post and just prints the URL (handy for testing)
+tgester summarise -c config.yaml -e .env \
+    --date 2026-06-19 --channels @nplusone,@bbbreaking --dry-run
+
+# Print the messages a date would pull, without the LLM or publishing (debug)
+tgester fetch -c config.yaml -e .env --channels @nplusone --date 2026-06-19
+
+# List the Claude models your API key can access (newest first)
+tgester models -e .env
+```
+
+A relative `session` path in the config is resolved against the config file's
+directory, so the commands work from any working directory.
+
 ### Deployment
 
 Examine and run `scripts/deploy.sh`.

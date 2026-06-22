@@ -8,9 +8,21 @@ from zoneinfo import ZoneInfo
 import typer
 from telethon import TelegramClient
 
-from tgester import Config, NewsSummaryAgent, publish_summary
+from tgester import Config, NewsSummaryAgent, get_messages_for_date, publish_summary
 
 app = typer.Typer(no_args_is_help=True)
+
+# Reusable option annotations
+ConfigOpt = Annotated[Path, typer.Option("--config", "-c", help="Path to YAML configuration file")]
+EnvOpt = Annotated[Path, typer.Option("--env", "-e", help="Path to .env file")]
+ChannelsOpt = Annotated[str | None, typer.Option(
+    "--channels", help="Override config channels (comma-separated, e.g. @a,@b)"
+)]
+DateOpt = Annotated[str | None, typer.Option(
+    "--date", help="Date to process (YYYY-MM-DD); defaults to yesterday in the configured timezone"
+)]
+DebugOpt = Annotated[bool, typer.Option("--debug", "-d", help="Enable debug logging")]
+
 
 def setup_logging(debug: bool = False):
     """Configure logging."""
@@ -22,52 +34,49 @@ def setup_logging(debug: bool = False):
     return logging.getLogger(__name__)
 
 
+def _resolve_date(target_date: str | None, tz: ZoneInfo) -> date:
+    """Parse --date or default to yesterday in the target timezone."""
+    if target_date is not None:
+        return date.fromisoformat(target_date)
+    return (datetime.now(tz) - timedelta(days=1)).date()
+
+
+def _resolve_channels(channels: str | None, cfg: Config) -> list[str]:
+    """Use --channels override if given, else the configured channel list."""
+    if channels:
+        return [c.strip() for c in channels.split(',')]
+    return cfg.telegram.channels
+
+
 @app.command()
 def summarise(
-        config: Annotated[Path, typer.Option(
-            "--config", "-c",
-            help="Path to YAML configuration file"
-        )] = Path("config.yaml"),
-        env_file: Annotated[Path, typer.Option(
-            "--env", "-e",
-            help="Path to .env file"
-        )] = Path(".env"),
-        target_date: Annotated[str | None, typer.Option(
-            "--date",
-            help="Date to summarise (YYYY-MM-DD); defaults to yesterday in the configured timezone"
-        )] = None,
-        # channels: Annotated[str | None, typer.Option(
-        #     "--channels",
-        #     help="Override channels (comma-separated)"
-        # )] = None,
-        debug: Annotated[bool, typer.Option(
-            "--debug", "-d",
-            help="Enable debug logging"
-        )] = False
+        config: ConfigOpt = Path("config.yaml"),
+        env_file: EnvOpt = Path(".env"),
+        channels: ChannelsOpt = None,
+        target_date: DateOpt = None,
+        dry_run: Annotated[bool, typer.Option(
+            "--dry-run",
+            help="Publish to Telegraph but skip posting to the summary channel; print the URL"
+        )] = False,
+        debug: DebugOpt = False
     ):
-    """Generate and post daily news summary."""
+    """Generate and post a daily news summary."""
     logger = setup_logging(debug)
 
     try:
-        # Load and validate configuration
         logger.info(f"Loading config from {config}")
         cfg = Config.load(config, env_file)
         cfg.validate_secrets()
 
-        # # Override channels if specified
-        # if channels:
-        #     cfg.telegram.channels = [c.strip() for c in channels.split(',')]
-        #     logger.info(f"Overriding channels: {cfg.telegram.channels}")
+        cfg.telegram.channels = _resolve_channels(channels, cfg)
+        if channels:
+            logger.info(f"Overriding channels: {cfg.telegram.channels}")
 
-        tz = ZoneInfo(cfg.telegram.timezone)
-        if target_date is not None:
-            summary_date = date.fromisoformat(target_date)
-        else:
-            summary_date = (datetime.now(tz) - timedelta(days=1)).date()
+        summary_date = _resolve_date(target_date, ZoneInfo(cfg.telegram.timezone))
         logger.info(f"Summarising news for {summary_date.isoformat()} ({cfg.telegram.timezone})")
 
         logger.info("Starting news summary generation")
-        asyncio.run(_run_summary(cfg, summary_date, logger))
+        asyncio.run(_run_summary(cfg, summary_date, dry_run, logger))
         logger.info("Summary completed successfully")
 
     except Exception:
@@ -75,7 +84,54 @@ def summarise(
         raise typer.Exit(code=1) from None
 
 
-async def _run_summary(cfg: Config, summary_date: date, logger):
+@app.command()
+def fetch(
+        config: ConfigOpt = Path("config.yaml"),
+        env_file: EnvOpt = Path(".env"),
+        channels: ChannelsOpt = None,
+        target_date: DateOpt = None,
+        debug: DebugOpt = False
+    ):
+    """Fetch and print messages for a date (no LLM, no publishing) — useful for debugging."""
+    logger = setup_logging(debug)
+
+    try:
+        cfg = Config.load(config, env_file)
+        if not cfg.telethon.api_id or not cfg.telethon.api_hash:
+            raise ValueError("Telethon credentials not found in environment")
+
+        chans = _resolve_channels(channels, cfg)
+        summary_date = _resolve_date(target_date, ZoneInfo(cfg.telegram.timezone))
+        logger.info(f"Fetching {len(chans)} channels for {summary_date.isoformat()} ({cfg.telegram.timezone})")
+
+        asyncio.run(_run_fetch(cfg, chans, summary_date))
+
+    except Exception:
+        logger.exception("Failed")
+        raise typer.Exit(code=1) from None
+
+
+@app.command()
+def models(
+        env_file: EnvOpt = Path(".env"),
+    ):
+    """List Claude models available to your API key (newest first)."""
+    import anthropic
+    from dotenv import load_dotenv
+
+    if env_file.exists():
+        load_dotenv(env_file)
+
+    try:
+        client = anthropic.Anthropic()
+        for m in client.models.list(limit=30):
+            print(f"{m.id:28} {m.display_name}")
+    except Exception as e:
+        typer.echo(f"Failed to list models: {e}", err=True)
+        raise typer.Exit(code=1) from None
+
+
+async def _run_summary(cfg: Config, summary_date: date, dry_run: bool, logger):
     """Run the actual summary generation."""
     session_path = Path(cfg.telethon.session)
     session_path.parent.mkdir(exist_ok=True)
@@ -107,6 +163,11 @@ async def _run_summary(cfg: Config, summary_date: date, logger):
 
     logger.info(f"Published: {telegraph_response['url']}")
 
+    if dry_run:
+        logger.info("Dry run: skipping post to summary channel")
+        print(telegraph_response['url'])
+        return
+
     # Post to summary channel
     async with client:
         await client.send_message(
@@ -114,6 +175,23 @@ async def _run_summary(cfg: Config, summary_date: date, logger):
             telegraph_response['url']
         )
         logger.info(f"Posted to {cfg.publishing.summary_channel}")
+
+
+async def _run_fetch(cfg: Config, channels: list[str], summary_date: date):
+    """Fetch messages for the date and print them, grouped by channel."""
+    session_path = Path(cfg.telethon.session)
+    session_path.parent.mkdir(exist_ok=True)
+
+    client = TelegramClient(**dict(cfg.telethon))
+    messages = await get_messages_for_date(
+        client, channels, summary_date, cfg.telegram.timezone
+    )
+
+    for channel, msgs in messages.items():
+        print(f"\n=== {channel} ({len(msgs)} messages) ===")
+        for ts, body in msgs.items():
+            oneline = ' '.join(body.split())
+            print(f"[{ts}] {oneline[:200]}")
 
 
 if __name__ == "__main__":
