@@ -18,19 +18,40 @@ class TelethonConfig(BaseModel):
 
 
 class TelegramConfig(BaseModel):
-    channels: list[str] = Field(..., min_length=1)
+    # Each entry is either '@handle' or a single-key mapping {'@handle': 'description'}.
+    # Descriptions, where present, are given to the model for grouping/attribution.
+    channels: list[str | dict[str, str | None]] = Field(..., min_length=1)
     timezone: str
-    # Optional per-channel descriptions ({'@handle': 'what it covers'}); given to
-    # the model so it can group and attribute stories by source.
-    descriptions: dict[str, str] = {}
 
     @field_validator('channels')
     @classmethod
     def validate_channels(cls, v):
-        for channel in v:
-            if not channel.startswith('@'):
-                raise ValueError(f"Channel {channel} must start with @")
+        for entry in v:
+            if isinstance(entry, dict):
+                if len(entry) != 1:
+                    raise ValueError(
+                        f"Channel entry {entry} must be a single '@handle: description' mapping"
+                    )
+                name = next(iter(entry))
+            else:
+                name = entry
+            if not isinstance(name, str) or not name.startswith('@'):
+                raise ValueError(f"Channel {name!r} must start with @")
         return v
+
+    @property
+    def channel_names(self) -> list[str]:
+        return [next(iter(c)) if isinstance(c, dict) else c for c in self.channels]
+
+    @property
+    def descriptions(self) -> dict[str, str]:
+        result = {}
+        for c in self.channels:
+            if isinstance(c, dict):
+                name, desc = next(iter(c.items()))
+                if desc:
+                    result[name] = desc
+        return result
 
 
 class AgentConfig(BaseModel):

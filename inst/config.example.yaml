@@ -5,12 +5,11 @@ telethon:
   session: 'telegram.session'
 
 telegram:
+  # Each entry is '@handle: description' (the description is fed to the model to
+  # improve grouping/attribution) or just '@handle' if you have no description.
   channels:
-    - '@<channel1>'
+    - '@<channel1>': 'what this channel covers'
     - '@<channel2>'
-  # Optional: tell the model what each channel covers, to improve grouping/attribution
-  descriptions:
-    '@<channel1>': 'what this channel covers'
   timezone: 'Europe/Prussia'
 
 agent:

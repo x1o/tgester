@@ -42,10 +42,10 @@ def _resolve_date(target_date: str | None, tz: ZoneInfo) -> date:
 
 
 def _resolve_channels(channels: str | None, cfg: Config) -> list[str]:
-    """Use --channels override if given, else the configured channel list."""
+    """Use --channels override if given, else the configured channel handles."""
     if channels:
         return [c.strip() for c in channels.split(',')]
-    return cfg.telegram.channels
+    return cfg.telegram.channel_names
 
 
 @app.command()
@@ -68,15 +68,17 @@ def summarise(
         cfg = Config.load(config, env_file)
         cfg.validate_secrets()
 
-        cfg.telegram.channels = _resolve_channels(channels, cfg)
+        chans = _resolve_channels(channels, cfg)
+        # A --channels override carries no descriptions; otherwise use config ones.
+        descriptions = {} if channels else cfg.telegram.descriptions
         if channels:
-            logger.info(f"Overriding channels: {cfg.telegram.channels}")
+            logger.info(f"Overriding channels: {chans}")
 
         summary_date = _resolve_date(target_date, ZoneInfo(cfg.telegram.timezone))
         logger.info(f"Summarising news for {summary_date.isoformat()} ({cfg.telegram.timezone})")
 
         logger.info("Starting news summary generation")
-        asyncio.run(_run_summary(cfg, summary_date, dry_run, logger))
+        asyncio.run(_run_summary(cfg, chans, descriptions, summary_date, dry_run, logger))
         logger.info("Summary completed successfully")
 
     except Exception:
@@ -131,7 +133,7 @@ def models(
         raise typer.Exit(code=1) from None
 
 
-async def _run_summary(cfg: Config, summary_date: date, dry_run: bool, logger):
+async def _run_summary(cfg: Config, channels: list[str], descriptions: dict, summary_date: date, dry_run: bool, logger):
     """Run the actual summary generation."""
     session_path = Path(cfg.telethon.session)
     session_path.parent.mkdir(exist_ok=True)
@@ -145,12 +147,12 @@ async def _run_summary(cfg: Config, summary_date: date, dry_run: bool, logger):
         thinking=cfg.agent.thinking
     )
 
-    logger.info(f"Processing {len(cfg.telegram.channels)} channels")
+    logger.info(f"Processing {len(channels)} channels")
 
     summary = await agent.create_daily_summary(
-        cfg.telegram.channels,
+        channels,
         summary_date,
-        cfg.telegram.descriptions
+        descriptions
     )
 
     logger.info("Summary generated successfully")
