@@ -1,3 +1,4 @@
+import re
 from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -61,11 +62,21 @@ async def get_channel_messages_for_date(client, channel_name, day_start, day_end
     return day_messages
 
 
+_HEADING_RE = re.compile(r'(?m)^(#{1,6})\s')
+
+
+def _demote_headings(md):
+    """Telegraph only permits h3/h4 headings; push every heading into that range
+    so markdown never emits a forbidden <h1>/<h2> from a stray '# '/'## ' line."""
+    return _HEADING_RE.sub(lambda m: '#' * min(max(len(m.group(1)), 3), 4) + ' ', md)
+
+
 def publish_summary(news_summary_content, access_token, author_name='News Summary Agent', domain='telegra.ph'):
     telegraph = Telegraph(access_token=access_token, domain=domain)
-    title, _, content = news_summary_content.replace('## ', '### ').lstrip('\n').partition('\n')
+    # First line is the page title; everything else is the body.
+    title, _, content = news_summary_content.lstrip('\n').partition('\n')
     title = title.strip('# ')
-    content = content.lstrip('\n')
+    content = _demote_headings(content.lstrip('\n'))
     nodes = html_to_nodes(markdown(content))
     response = telegraph.create_page(
         title=title,
