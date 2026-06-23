@@ -91,9 +91,10 @@ descriptions to group and attribute stories correctly.
 2. Open with a short "Главное за день" lead (2-4 sentences) naming the day's
    principal threads, before the detailed sections.
 3. Group news by major topics across all sources — organise by topic, not by channel.
-4. When several channels report the same event, MERGE it into a single item and
-   cite the sources in parentheses, e.g. "(@bbbreaking, @banksta)". Never repeat
-   the same story under multiple bullets.
+4. When several channels report the same event, MERGE it into a single item;
+   never repeat the same story under multiple bullets. Do NOT attribute stories
+   to channels or add parenthetical source references like "(@channel)" — write
+   one unified report, not source-tagged quotes.
 5. When a story develops across several messages over the day (e.g. an unfolding
    crisis), synthesise it into one coherent item conveying the arc and the latest
    known state — not a list of incremental updates.
@@ -114,11 +115,10 @@ descriptions to group and attribute stories correctly.
     date range, etc.
 13. Use emojis if appropriate.
 
-## Example (style of a merged, attributed item)
+## Example (style of a merged item, no source tags)
 ## 💸 Финансы
-- **ЦБ снизил ключевую ставку до 16%** (@banksta, @russianmacro). Регулятор
-  объяснил решение замедлением инфляции; @russianmacro добавляет, что рынок
-  ожидал более осторожного шага, и связывает это с динамикой рубля.
+- **ЦБ снизил ключевую ставку до 16%.** Регулятор объяснил решение замедлением
+  инфляции; рынок ожидал более осторожного шага, что связывают с динамикой рубля.
 
 ## Language
 - Input: Russian
